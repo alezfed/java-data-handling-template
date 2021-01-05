@@ -1,24 +1,21 @@
 package com.epam.izh.rd.online.repository;
 
 import java.io.*;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.List;
 
 public class SimpleFileRepository implements FileRepository {
 
     @Override
     public long countFilesInDirectory(String path) {
         File directory = new File(path);
-        File[] filesInDir = directory.listFiles();
-        if (!directory.exists() || filesInDir == null) {
+        if (!directory.exists() || !directory.isDirectory() || directory.listFiles() == null) {
             return 0;
         }
         long count = 0;
-        for (File currentFile : filesInDir) {
+        for (File currentFile : directory.listFiles()) {
             if (currentFile.isFile() || currentFile.isHidden()) {
                 count++;
             } else {
@@ -31,15 +28,11 @@ public class SimpleFileRepository implements FileRepository {
     @Override
     public long countDirsInDirectory(String path) {
         File directory = new File(path);
-        File[] filesInDir = directory.listFiles();
-        if (!directory.exists()) {
+        if (!directory.exists() || !directory.isDirectory() || directory.listFiles() == null) {
             return 0;
         }
-        if (filesInDir == null) {
-            return 1;
-        }
         long count = 1;
-        for (File currentFile : filesInDir) {
+        for (File currentFile : directory.listFiles()) {
             if (currentFile.isDirectory()) {
                 count += countDirsInDirectory(currentFile.getPath());
             }
@@ -52,28 +45,25 @@ public class SimpleFileRepository implements FileRepository {
         if (from == null || to == null) {
             return;
         }
-        File fromDir = new File(from);
-        File toDir = new File(to);
-        if (!fromDir.isDirectory()) {
-            fromDir = fromDir.getParentFile();
+        File fromDirectory = new File(from);
+        File toDirectory = new File(to);
+        if (!fromDirectory.isDirectory()) {
+            fromDirectory= fromDirectory.getParentFile();
         }
-        if (!toDir.isDirectory()) {
-            toDir = toDir.getParentFile();
+        if (!toDirectory.isDirectory()) {
+            toDirectory = toDirectory.getParentFile();
         }
-        if (!fromDir.exists()) {
+        if (!fromDirectory.exists() || fromDirectory.listFiles() == null) {
             return;
         }
-        if (!toDir.exists()) {
-            toDir.mkdirs();
+        if (!toDirectory.exists()) {
+            toDirectory.mkdirs();
         }
-        File[] filesInDir = fromDir.listFiles();
-        if (filesInDir == null || filesInDir.length == 0) {
-            return;
-        }
-        for (File currentFile : filesInDir) {
+        for (File currentFile : fromDirectory.listFiles()) {
             if (currentFile.getName().toLowerCase().endsWith(".txt")) {
                 try {
-                    Files.copy(currentFile.toPath(), Paths.get(toDir.getPath(), currentFile.getName()), StandardCopyOption.REPLACE_EXISTING);
+                    Files.copy(currentFile.toPath(), Paths.get(toDirectory.getPath(),
+                            currentFile.getName()), StandardCopyOption.REPLACE_EXISTING);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -81,13 +71,6 @@ public class SimpleFileRepository implements FileRepository {
         }
     }
 
-    /**
-     * Метод создает файл на диске с расширением txt
-     *
-     * @param path путь до нового файла
-     * @param name имя файла
-     * @return был ли создан файл
-     */
     @Override
     public boolean createFile(String path, String name) {
         if (path == null || name == null) {
@@ -109,17 +92,10 @@ public class SimpleFileRepository implements FileRepository {
 
     @Override
     public String readFileFromResources(String fileName) {
-        if (fileName==null || !Files.exists(Paths.get("src/main/resources", fileName))) {
-            return null;
-        }
-        List<String> lines = null;
         try {
-            lines = Files.readAllLines(Paths.get("src/main/resources", fileName), StandardCharsets.UTF_8);
+            return new String(Files.readAllBytes(Paths.get("src/main/resources", fileName)));
         } catch (IOException e) {
             e.printStackTrace();
-        }
-        for (String line : lines) {
-            return line;
         }
         return null;
     }

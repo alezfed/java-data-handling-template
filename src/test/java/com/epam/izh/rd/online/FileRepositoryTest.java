@@ -2,11 +2,14 @@ package com.epam.izh.rd.online;
 
 import com.epam.izh.rd.online.repository.FileRepository;
 import com.epam.izh.rd.online.repository.SimpleFileRepository;
+
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.stream.Stream;
+
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -17,6 +20,7 @@ import java.net.URL;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 public class FileRepositoryTest {
 
@@ -74,9 +78,16 @@ public class FileRepositoryTest {
   @Test
   @DisplayName("Тест метода FileRepository.createFile(String path)")
   void testCreateFile() {
+    Path pathNewFile = Paths.get(TEST_DIR_CREATE_PATH, TEST_FILE_TO_CREATE);
+    assertFalse(Files.exists(pathNewFile));
     fileRepository.createFile(TEST_DIR_CREATE_PATH, TEST_FILE_TO_CREATE);
-
-    assertTrue(getFile(TEST_DIR_CREATE_PATH + "/" + TEST_FILE_TO_CREATE).exists());
+    assertTrue(Files.exists(pathNewFile));
+    try {
+      Files.deleteIfExists(pathNewFile);
+      Files.deleteIfExists(pathNewFile.getParent());
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
   }
 
   @Test
