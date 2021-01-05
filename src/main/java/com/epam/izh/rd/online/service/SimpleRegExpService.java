@@ -1,27 +1,37 @@
 package com.epam.izh.rd.online.service;
 
+import com.epam.izh.rd.online.repository.SimpleFileRepository;
+
 public class SimpleRegExpService implements RegExpService {
 
-    /**
-     * Метод должен читать файл sensitive_data.txt (из директории resources) и маскировать в нем конфиденциальную информацию.
-     * Номер счета должен содержать только первые 4 и последние 4 цифры (1234 **** **** 5678). Метод должен содержать регулярное
-     * выражение для поиска счета.
-     *
-     * @return обработанный текст
-     */
-    @Override
-    public String maskSensitiveData() {
-        return null;
+    private final SimpleFileRepository fileRepository;
+
+    public SimpleRegExpService() {
+        fileRepository = new SimpleFileRepository();
     }
 
-    /**
-     * Метод должен считыввать файл sensitive_data.txt (из директории resources) и заменять плейсхолдер ${payment_amount} и ${balance} на заданные числа. Метод должен
-     * содержать регулярное выражение для поиска плейсхолдеров
-     *
-     * @return обработанный текст
-     */
+    public SimpleRegExpService(SimpleFileRepository simpleFileRepository) {
+        this.fileRepository = simpleFileRepository;
+    }
+
+    @Override
+    public String maskSensitiveData() {
+        String startString = fileRepository.readFileFromResources("sensitive_data.txt");
+        if (startString == null || startString.equals("")) {
+            return "";
+        }
+        return startString.replaceAll("\\n|\\r\\n", "").
+                replaceAll("\\b(\\d{4})(\\s*\\d{4}\\s*\\d{4}\\s*)(\\d{4})\\b", "$1 **** **** $3");
+    }
+
     @Override
     public String replacePlaceholders(double paymentAmount, double balance) {
-        return null;
+        String startString = fileRepository.readFileFromResources("sensitive_data.txt");
+        if (startString == null || startString.equals("")) {
+            return "";
+        }
+        return startString.replaceAll("\\n|\\r\\n", "").
+                replaceAll("\\$\\{payment_amount\\}", String.format("%.0f", paymentAmount)).
+                replaceAll("\\$\\{balance\\}", String.format("%.0f", balance));
     }
 }

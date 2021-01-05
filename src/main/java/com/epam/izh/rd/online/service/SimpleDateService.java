@@ -1,64 +1,61 @@
 package com.epam.izh.rd.online.service;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 
 public class SimpleDateService implements DateService {
 
-    /**
-     * Метод парсит дату в строку
-     *
-     * @param localDate дата
-     * @return строка с форматом день-месяц-год(01-01-1970)
-     */
     @Override
     public String parseDate(LocalDate localDate) {
+        try {
+            DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+            return localDate.format(dateTimeFormatter);
+        } catch (DateTimeException dateTimeException) {
+            System.out.println("Ошибка преобразования даты в методе parseDate(LocalDate localDate) класса SimpleDateService.");
+            dateTimeException.printStackTrace();
+        }
         return null;
     }
 
-    /**
-     * Метод парсит строку в дату
-     *
-     * @param string строка в формате год-месяц-день часы:минуты (1970-01-01 00:00)
-     * @return дата и время
-     */
     @Override
     public LocalDateTime parseString(String string) {
+        try {
+            DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+            return LocalDateTime.parse(string, dateTimeFormatter);
+
+        } catch (DateTimeException dateTimeException) {
+            System.out.println("Ошибка преобразования даты в методе parseString(String string)) класса SimpleDateService.");
+            dateTimeException.printStackTrace();
+        }
         return null;
     }
 
-    /**
-     * Метод конвертирует дату в строку с заданным форматом
-     *
-     * @param localDate исходная дата
-     * @param formatter формат даты
-     * @return полученная строка
-     */
     @Override
     public String convertToCustomFormat(LocalDate localDate, DateTimeFormatter formatter) {
+        try {
+            return localDate.format(formatter);
+        } catch (DateTimeException dateTimeException) {
+            System.out.println("Ошибка преобразования даты в методе convertToCustomFormat(LocalDate localDate, DateTimeFormatter formatter) класса SimpleDateService.");
+            dateTimeException.printStackTrace();
+        }
         return null;
     }
 
-    /**
-     * Метод получает следующий високосный год
-     *
-     * @return високосный год
-     */
     @Override
     public long getNextLeapYear() {
-        return 0;
+        int intYear = Year.now(ZoneId.systemDefault()).getValue();
+        while (true) {
+            if (Year.of(++intYear).isLeap()) break;
+        }
+        return intYear;
     }
 
-    /**
-     * Метод считает число секунд в заданном году
-     *
-     * @return число секунд
-     */
     @Override
     public long getSecondsInYear(int year) {
-        return 0;
+        LocalDateTime startLocalDateTime = LocalDateTime.of(year, 1, 1, 0, 0, 0);
+        LocalDateTime endLocalDateTime = startLocalDateTime.plusYears(1);
+        Instant startInstant = startLocalDateTime.toInstant(ZoneOffset.UTC);
+        Instant endInstant = endLocalDateTime.toInstant(ZoneOffset.UTC);
+        return Duration.between(startInstant, endInstant).getSeconds();
     }
-
-
 }

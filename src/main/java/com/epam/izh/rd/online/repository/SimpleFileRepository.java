@@ -1,60 +1,102 @@
 package com.epam.izh.rd.online.repository;
 
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+
 public class SimpleFileRepository implements FileRepository {
 
-    /**
-     * Метод рекурсивно подсчитывает количество файлов в директории
-     *
-     * @param path путь до директори
-     * @return файлов, в том числе скрытых
-     */
     @Override
     public long countFilesInDirectory(String path) {
-        return 0;
+        File directory = new File(path);
+        if (!directory.exists() || !directory.isDirectory() || directory.listFiles() == null) {
+            return 0;
+        }
+        long count = 0;
+        for (File currentFile : directory.listFiles()) {
+            if (currentFile.isFile() || currentFile.isHidden()) {
+                count++;
+            } else {
+                count += countFilesInDirectory(currentFile.getPath());
+            }
+        }
+        return count;
     }
 
-    /**
-     * Метод рекурсивно подсчитывает количество папок в директории, считая корень
-     *
-     * @param path путь до директории
-     * @return число папок
-     */
     @Override
     public long countDirsInDirectory(String path) {
-        return 0;
+        File directory = new File(path);
+        if (!directory.exists() || !directory.isDirectory() || directory.listFiles() == null) {
+            return 0;
+        }
+        long count = 1;
+        for (File currentFile : directory.listFiles()) {
+            if (currentFile.isDirectory()) {
+                count += countDirsInDirectory(currentFile.getPath());
+            }
+        }
+        return count;
     }
 
-    /**
-     * Метод копирует все файлы с расширением .txt
-     *
-     * @param from путь откуда
-     * @param to   путь куда
-     */
     @Override
     public void copyTXTFiles(String from, String to) {
-        return;
+        if (from == null || to == null) {
+            return;
+        }
+        File fromDirectory = new File(from);
+        File toDirectory = new File(to);
+        if (!fromDirectory.isDirectory()) {
+            fromDirectory= fromDirectory.getParentFile();
+        }
+        if (!toDirectory.isDirectory()) {
+            toDirectory = toDirectory.getParentFile();
+        }
+        if (!fromDirectory.exists() || fromDirectory.listFiles() == null) {
+            return;
+        }
+        if (!toDirectory.exists()) {
+            toDirectory.mkdirs();
+        }
+        for (File currentFile : fromDirectory.listFiles()) {
+            if (currentFile.getName().toLowerCase().endsWith(".txt")) {
+                try {
+                    Files.copy(currentFile.toPath(), Paths.get(toDirectory.getPath(),
+                            currentFile.getName()), StandardCopyOption.REPLACE_EXISTING);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
     }
 
-    /**
-     * Метод создает файл на диске с расширением txt
-     *
-     * @param path путь до нового файла
-     * @param name имя файла
-     * @return был ли создан файл
-     */
     @Override
     public boolean createFile(String path, String name) {
-        return false;
+        if (path == null || name == null) {
+            return false;
+        }
+        Path pathDirectory = Paths.get(path);
+        Path pathNewFile = Paths.get(path, name);
+        try {
+            if (!Files.exists(pathDirectory)) {
+                Files.createDirectories(pathDirectory);
+            }
+            Files.deleteIfExists(pathNewFile);
+            Files.createFile(pathNewFile);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return Files.exists(pathNewFile);
     }
 
-    /**
-     * Метод считывает тело файла .txt из папки src/main/resources
-     *
-     * @param fileName имя файла
-     * @return контент
-     */
     @Override
     public String readFileFromResources(String fileName) {
+        try {
+            return new String(Files.readAllBytes(Paths.get("src/main/resources", fileName)));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         return null;
     }
 }
